@@ -9,10 +9,12 @@
 
 
 run_vast <- function(dat_index, ObsModel){
-browser()
-  #Specify 
-  DateFile = paste0(getwd(),"/VAST_output_", paste0("Obs_", 
-    paste(ObsModel, collapse = "_")))
+
+  #Specify data set
+  dat <- the_data[[dat_index]]  
+  
+  DateFile = paste0(getwd(),"/VAST_output_", paste0("Dat_", dat_index,"_Obs_", 
+    paste(ObsModel, collapse = "_"), "/"))
   dir.create(DateFile)
 
   #Save configurations
@@ -28,13 +30,13 @@ browser()
                             Lat = dat$lat,
                             AreaSwept_km2 = 1, 
                             Lon = dat$lon)
-
   
   #Specify extrapolation list
   Extrapolation_List <- Grid_Fn(Data_Geostat = Data_Geostat,
     zone = 12, grid_dim_km = 10)
   save(Extrapolation_List, file = paste0(DateFile, "Extrapolation_List.RData"))
-  
+
+  #Extrapolate the grids  
   Spatial_List = Spatial_Information_Fn( grid_size_km = grid_size_km, n_x = n_x, 
     Method = Method, Lon = Data_Geostat[,'Lon'], Lat = Data_Geostat[,'Lat'], 
     Extrapolation_List = Extrapolation_List, 
@@ -45,7 +47,7 @@ browser()
   Data_Geostat = cbind(Data_Geostat, "knot_i"=Spatial_List$knot_i)
   SpatialDeltaGLMM::Plot_data_and_knots(Extrapolation_List = Extrapolation_List,
    Spatial_List = Spatial_List, Data_Geostat = Data_Geostat, PlotDir = DateFile)
-browser()
+
   #---------------------------------
   #Run the model
   TmbData = VAST::Data_Fn("Version" = Version, "FieldConfig" = FieldConfig, 
@@ -61,8 +63,6 @@ browser()
     "MeshList"=Spatial_List$MeshList, "GridList"=Spatial_List$GridList, 
     "Method"=Spatial_List$Method, "Options"=Options )
   
-  # hist(dat$cpue, breaks = 50)
-  
   TmbList = VAST::Build_TMB_Fn("TmbData" = TmbData, 
     "RunDir" = DateFile, 
     "Version" = Version, 
@@ -74,5 +74,9 @@ browser()
     newtonsteps = 1,
     lower = TmbList[["Lower"]], upper = TmbList[["Upper"]], getsd = TRUE, 
     savedir = DateFile, bias.correct = FALSE)
-  browser()
+
+  Report = Obj$report()
+  Save = list("Opt"=Opt, "Report"=Report, "ParHat"=Obj$env$parList(Opt$par), "TmbData"=TmbData)
+  save(Save, file=paste0(DateFile,"Save.RData"))
+  save.image(paste0(DateFile,"Result.RData"))
 }
