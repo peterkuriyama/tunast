@@ -50,7 +50,7 @@ n_x <- c(10, 50, 100, 200, 1000)[2] #number of stations
 Kmeans_Config <-  list( "randomseed"=1, "nstart"=100, "iter.max"=1e3 )
 
 #Specify number of species
-nspp <- 1
+nspp <- 3
 #------------FieldConfig
 #Omega refers to spatial variation
   #Omega1 - variation in encounter probability
@@ -94,19 +94,25 @@ Region <- "Other"
 #Look at proportion of zeroes
 # the_data$bet_numbers_annual %>% group_by(year, lat, lon) 
 
-#Look at number of zeroes 
+#-----------------------------------------------------------------------------------------------------
+#Run example with annual counts and one species
+nspp <- 1
+FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp) #
+RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+
 run_vast(dat_index = 1, ObsModel = c(1, 0))
 
 
-run_vast(dat_index = 2, 
-  ObsModel = c(1, 3))
+
+#Run the length comp example
+nspp <- 3
+FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp) #
+RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+run_vast(dat_index = 2, ObsModel = c(1, 3))
 
 
 #---------------------------------
-#Process data
-#Specify dat to use
 
-dat <- bet_comps_annual
 
 
 # For function: Specify data and ObsModel
