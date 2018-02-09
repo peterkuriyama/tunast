@@ -13,8 +13,8 @@ Grid_Fn = function(Data_Geostat,zone,grid_dim_km){
   lat_South <- Data_Geostat$Lat < 0
   Data_Geostat_South <- Data_Geostat[lat_South,]  
 
-  # source("Prepare_Extrapolation_Data_Fn.R")
-  # source("Prepare_Other_Extrapolation_Data_Fn.R")
+  source("Prepare_Extrapolation_Data_Fn.R")
+  source("Prepare_Other_Extrapolation_Data_Fn.R")
   Extrapolation_List_South = Prepare_Extrapolation_Data_Fn( Region=Region, strata.limits=strata.limits, grid_dim_km=c(grid_dim_km,grid_dim_km), observations_LL=Data_Geostat_South[,c('Lat','Lon')], maximum_distance_from_sample=10,zone=zone)  
 
   Extrapolation_List_South$Data_Extrap$N_km <- Extrapolation_List_South$Data_Extrap$N_km - 10000  
