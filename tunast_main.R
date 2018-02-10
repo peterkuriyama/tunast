@@ -21,6 +21,9 @@ library(SpatialDeltaGLMM)
 library(reshape2)
 library(devtools)
 source("Grid_Fn.R")
+source("Spatial_Information_Fn.R")
+source("Calc_Polygon_Areas_and_Polygons_Fn.R")
+source("Calc_Anisotropic_Mesh.R")
 
 devtools::install_github('peterkuriyama/tunast')
 library(tunast)
@@ -100,8 +103,11 @@ nspp <- 1
 FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp) #
 RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
 
+#Run the model
 run_vast(dat_index = 1, ObsModel = c(1, 0))
 
+#analyze the results
+plot_results(dat_index = 1, ObsModel = c(1, 0))
 
 
 #Run the length comp example
