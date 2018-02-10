@@ -41,10 +41,12 @@ run_vast <- function(dat_index, ObsModel){
     Method = Method, Lon = Data_Geostat[,'Lon'], Lat = Data_Geostat[,'Lat'], 
     Extrapolation_List = Extrapolation_List, 
     randomseed = Kmeans_Config[["randomseed"]], nstart = Kmeans_Config[["nstart"]],  
-   iter.max = Kmeans_Config[["iter.max"]], DirPath = DateFile, Save_Results = FALSE)
+   iter.max = Kmeans_Config[["iter.max"]], DirPath = DateFile, Save_Results = TRUE)
+  save(Spatial_List, file = paste0(DateFile, "Spatial_List.RData"))
   
   # Add knots to Data_Geostat
   Data_Geostat = cbind(Data_Geostat, "knot_i"=Spatial_List$knot_i)
+  save(Data_Geostat, file = paste0(DateFile, "Data_Geostat.RData"))
   SpatialDeltaGLMM::Plot_data_and_knots(Extrapolation_List = Extrapolation_List,
    Spatial_List = Spatial_List, Data_Geostat = Data_Geostat, PlotDir = DateFile)
 
