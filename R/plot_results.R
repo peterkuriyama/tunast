@@ -10,7 +10,7 @@
 
 plot_results <- function(dat_index, ObsModel){
 
-
+browser()
   #------------Load and parse the model results
   DateFile = paste0(getwd(),"/VAST_output_", paste0("Dat_", dat_index,"_Obs_", 
     paste(ObsModel, collapse = "_"), "/"))
