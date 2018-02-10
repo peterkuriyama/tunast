@@ -70,6 +70,7 @@ run_vast <- function(dat_index, ObsModel){
     "Version" = Version, 
     "RhoConfig" = RhoConfig, 
     "loc_x" = Spatial_List$loc_x, "Method" = Method)
+  save(TmbList, file = paste0(DateFile, "TmbList.RData"))
   Obj = TmbList[["Obj"]]
   
   Opt = TMBhelper::Optimize(obj = Obj, 
