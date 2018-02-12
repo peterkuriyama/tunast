@@ -9,7 +9,6 @@
 
 
 run_vast <- function(dat_index, ObsModel1){
-browser()
   #Specify data set
   dat <- the_data[[dat_index]]  
   
@@ -56,11 +55,13 @@ browser()
 
   #---------------------------------
   #Run the model
-  print(ObsModel1)
+  cat("Obs Config is", ObsModel1, "\n")
+  # browser()
   TmbData = VAST::Data_Fn("Version" = Version, "FieldConfig" = FieldConfig, 
     "OverdispersionConfig" = OverdispersionConfig,  
     "RhoConfig" = RhoConfig, "ObsModel" = ObsModel1, 
-    "c_i" = as.numeric(Data_Geostat$spp) - 1, 
+    "c_i" = as.numeric(Data_Geostat$spp) - 1,
+    # "c_i" = as.numeric(Data_Geostat$spp), 
     "b_i" = Data_Geostat$Catch_num, 
     "a_i" = Data_Geostat$AreaSwept_km2, 
     "v_i" = as.numeric(Data_Geostat$Vessel) - 1, 

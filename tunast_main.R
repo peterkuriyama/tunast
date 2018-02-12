@@ -118,10 +118,21 @@ plot_results(dat_index = 1, ObsModel = c(1, 0))
 
 
 #Run the length comp example
-nspp <- 2
-FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp) #
+nspp <- 3
+#With IID for each spatiotemporal term, also change any missing 
+#year-category combinations to NAs
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
+the_data[[4]] <- the_data[[2]]
+the_data[[4]][which(the_data[[4]]$cpue == 0), "cpue"] <- NA
+
+#Tried IID combinations
+
+# https://github.com/nwfsc-assess/geostatistical_delta-GLMM/wiki/What-to-do-with-a-species-with-0%25-or-100%25-encounters-in-any-year
 RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
-run_vast(dat_index = 2, ObsModel = c(1, 3))
+run_vast(dat_index = 2, ObsModel1 = c(1, 3))
+
+#---------------------------------
+#Try to run by filtering out locations with zeroes 
 
 
 #---------------------------------
