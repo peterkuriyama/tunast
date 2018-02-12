@@ -65,7 +65,14 @@ FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp
 
 #------------Rhoconfig
 #Specify structure of time intervals (fixed effect or random effect)
-# 1: 
+#Beta are intercepts, epsilons are spatiotemporal variation 
+#Structure of time intervals:
+#0: Each year as fixed effect
+#1: Each year as random following iid distribution
+#2: Each year as random following random walk
+#3: constant among years as fixed effect
+#4: each year as random following AR1 process
+
 RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
 
 #------------Overdispersion Config
@@ -111,7 +118,7 @@ plot_results(dat_index = 1, ObsModel = c(1, 0))
 
 
 #Run the length comp example
-nspp <- 3
+nspp <- 2
 FieldConfig <- c("Omega1"= nspp, "Epsilon1"=nspp, "Omega2"=nspp, "Epsilon2"=nspp) #
 RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
 run_vast(dat_index = 2, ObsModel = c(1, 3))
