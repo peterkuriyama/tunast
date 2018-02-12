@@ -4,21 +4,25 @@
 
 #' @param dat_index Specify the dataset to use numerically. Options are 1-annual counts; 
 #' 2-annual numbers by size; 3 - annual numbers by size and season
-#' @param ObsModel ObsModel configuration
+#' @param ObsModel1 ObsModel configuration defined as argument
 #' @export
 
 
-run_vast <- function(dat_index, ObsModel){
-
+run_vast <- function(dat_index, ObsModel1){
+browser()
   #Specify data set
   dat <- the_data[[dat_index]]  
   
   DateFile = paste0(getwd(),"/VAST_output_", paste0("Dat_", dat_index,"_Obs_", 
-    paste(ObsModel, collapse = "_"), "/"))
+    paste(ObsModel1, collapse = "_"), "/"))
   dir.create(DateFile)
 
   #Save configurations
-  Record = ThorsonUtilities::bundlelist( c("Version","Method","grid_size_km","n_x","FieldConfig","RhoConfig","OverdispersionConfig","ObsModel","Kmeans_Config") )
+  Record <- lapply(c("Version","Method","grid_size_km","n_x","FieldConfig","RhoConfig","OverdispersionConfig","ObsModel1","Kmeans_Config"),
+    FUN = function(x) get(x))
+  names(Record) <- c("Version","Method","grid_size_km","n_x","FieldConfig","RhoConfig","OverdispersionConfig","ObsModel1","Kmeans_Config")
+
+  # Record = ThorsonUtilities::bundlelist( c("Version","Method","grid_size_km","n_x","FieldConfig","RhoConfig","OverdispersionConfig","ObsModel1","Kmeans_Config") )
   save( Record, file=file.path(DateFile,"Record.RData"))
   capture.output( Record, file=paste0(DateFile,"Record.txt"))
 
@@ -52,9 +56,10 @@ run_vast <- function(dat_index, ObsModel){
 
   #---------------------------------
   #Run the model
+  print(ObsModel1)
   TmbData = VAST::Data_Fn("Version" = Version, "FieldConfig" = FieldConfig, 
     "OverdispersionConfig" = OverdispersionConfig,  
-    "RhoConfig" = RhoConfig, "ObsModel" = ObsModel, 
+    "RhoConfig" = RhoConfig, "ObsModel" = ObsModel1, 
     "c_i" = as.numeric(Data_Geostat$spp) - 1, 
     "b_i" = Data_Geostat$Catch_num, 
     "a_i" = Data_Geostat$AreaSwept_km2, 

@@ -6,13 +6,13 @@
 Specify model characteristics outside of the function. Currently has the ability
 to save the output and write the results to the directory}
 \usage{
-run_vast(dat_index, ObsModel)
+run_vast(dat_index, ObsModel1)
 }
 \arguments{
 \item{dat_index}{Specify the dataset to use numerically. Options are 1-annual counts; 
 2-annual numbers by size; 3 - annual numbers by size and season}
 
-\item{ObsModel}{ObsModel configuration}
+\item{ObsModel1}{ObsModel configuration defined as argument}
 }
 \description{
 Function run VAST
