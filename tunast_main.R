@@ -31,6 +31,59 @@ library(tunast)
 #Load the Data
 the_data <- process_bigeye_data(nspp = 3)
 
+#Plot the data for capam 
+world_map <- map_data("world")  
+
+####Map of average counts data
+counts <- the_data[[1]] %>% group_by(lat, lon) %>% summarize(min_cpue = min(cpue),
+  avg_cpue = mean(cpue), max_cpue = max(cpue), diff_cpue = max_cpue - min_cpue,
+  sd_cpue = sd(cpue), cv_cpue = sd_cpue / avg_cpue) %>% as.data.frame
+
+ggplot(counts, aes(x = lon, y = lat)) + geom_tile(aes(fill = avg_cpue)) +
+  geom_map(data = world_map, map = world_map, 
+    aes(x = long, y = lat, map_id = region)) + 
+  scale_x_continuous(limits = c(-148, -72)) + 
+  scale_y_continuous(limits = c(-43, 48)) + 
+  scale_fill_gradient(low = 'white', high = 'red') + theme_bw() + 
+  ggsave("bigeye_counts.png", width = 7, height = 7)
+
+####Map of average counts data
+ggplot(counts, aes(x = lon, y = lat)) + geom_tile(aes(fill = cv_cpue)) +
+  geom_map(data = world_map, map = world_map, 
+    aes(x = long, y = lat, map_id = region)) + 
+  scale_x_continuous(limits = c(-148, -72)) + 
+  scale_y_continuous(limits = c(-43, 48)) + 
+  scale_fill_gradient(low = 'white', high = 'blue') + theme_bw() +
+  ggsave("bigeye_cv.png", width = 7, height = 7)
+
+####Map of past 20 years
+cpue_hook <- the_data[[1]]
+cpue_hook$cpue <- cpue_hook$cpue / cpue_hook$hooks
+cpue_hook[which(is.na(cpue_hook$cpue)), 'cpue'] <- 0
+
+cpue_hook %>% filter(year >= 1990) %>% ggplot(aes(x = lon, y = lat)) +
+  geom_tile(aes(fill = cpue)) +
+  geom_map(data = world_map, map = world_map, 
+    aes(x = long, y = lat, map_id = region)) + 
+  scale_x_continuous(limits = c(-148, -72)) + 
+  scale_y_continuous(limits = c(-43, 48)) + 
+  scale_fill_gradient(low = 'white', high = 'red') + theme_bw() + 
+  facet_wrap(~ year) + 
+  ggsave('bigeye_cpue.png', width = 9.5, height = 8.8)
+
+#--------------------------------------------------------------
+####Map of japanese catch compositions
+jpn_cc <- the_data[[2]]
+
+jpn_cc %>% group_by(lat, lon, spp) %>% summarize(avg_cpue = mean(cpue)) %>% 
+  ggplot(aes(x = lon, y = lat)) + geom_tile(aes(fill = avg_cpue)) + 
+  facet_wrap(~ spp) + scale_fill_gradient(low = 'white', high = 'red') +
+  geom_map(data = world_map, map = world_map, 
+    aes(x = long, y = lat, map_id = region)) + 
+  scale_x_continuous(limits = c(-148, -72)) + 
+  scale_y_continuous(limits = c(-43, 48)) + theme_bw() + 
+  ggsave("bigeye_size_counts.png", width = 12, height = 6)
+
 #Check the proportion zeroes in the data
 # the_data[[2]] %>% group_by(spp, year, lat, lon) %>% summarize(nzeroes = length(which(cpue == 0))) %>% 
 #   ungroup %>% distinct(nzeroes)
@@ -49,7 +102,7 @@ the_data <- process_bigeye_data(nspp = 3)
 Version <- "VAST_v4_0_0"
 Method <- c("Grid", "Mesh", "Spherical_mesh")[2]
 grid_size_km <- 10
-n_x <- c(10, 50, 100, 200, 1000)[2] #number of stations
+n_x <- c(10, 45, 100, 200, 1000)[2] #number of stations
 Kmeans_Config <-  list( "randomseed"=1, "nstart"=100, "iter.max"=1e3 )
 
 #Specify number of species
@@ -116,30 +169,92 @@ run_vast(dat_index = 1, ObsModel = c(1, 0))
 #analyze the results
 plot_results(dat_index = 1, ObsModel = c(1, 0))
 
+#Annual numbers converged
+
+#---------------------------------
+#Size composition data
 
 #Run the length comp example
 nspp <- 3
 #With IID for each spatiotemporal term, also change any missing 
 #year-category combinations to NAs
-FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
-the_data[[4]] <- the_data[[2]]
-the_data[[4]][which(the_data[[4]]$cpue == 0), "cpue"] <- NA
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"=0, "Epsilon2"=0) #
 
-#Tried IID combinations
+#Filter out zeroes
+temp <- the_data[[2]]
+temp <- temp %>% filter(cpue != 0)
+the_data[[4]] <- temp
 
 # https://github.com/nwfsc-assess/geostatistical_delta-GLMM/wiki/What-to-do-with-a-species-with-0%25-or-100%25-encounters-in-any-year
+RhoConfig <- c("Beta1"=3, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+run_vast(dat_index = 4, ObsModel1 = c(1, 3))
+
+#Things that I've tried
+# FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"=0, "Epsilon2"=0) #
+##Beta1 = 2 with dat_index = 4; error map factor
+##Tried RhoConfig <- c("Beta1"=1, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0)
+
+##Tried RhoConfig <- c("Beta1"=3, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0)
+# Error in par[-random] <- x : replacement has length zero
+# In addition: Warning message:
+# In TMBhelper::Optimize(obj = Obj, newtonsteps = 1, lower = TmbList[["Lower"]],  :
+#   Hessian is not positive definite, so standard errors are not available
+
+#---------------------------------
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
+RhoConfig <- c("Beta1"=1, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+run_vast(dat_index = 4, ObsModel1 = c(1, 3))
+# Error in MakeADFun(data = TmbData, parameters = Parameters, hessian = FALSE,  : 
+#   A map factor length must equal parameter length
+
+#---------------------------------
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
 RhoConfig <- c("Beta1"=0, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
-run_vast(dat_index = 2, ObsModel1 = c(1, 3))
+run_vast(dat_index = 4, ObsModel1 = c(1, 3))
+# ?Computationl singular
+#---------------------------------
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
+RhoConfig <- c("Beta1"=2, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+run_vast(dat_index = 4, ObsModel1 = c(1, 3))
+# Error in MakeADFun(data = TmbData, parameters = Parameters, hessian = FALSE,  : 
+#   A map factor length must equal parameter length
+#---------------------------------
+FieldConfig <- c("Omega1"= "IID", "Epsilon1"="IID", "Omega2"="IID", "Epsilon2"="IID") #
+RhoConfig <- c("Beta1"=3, "Beta2"=0, "Epsilon1"=0, "Epsilon2"=0) #Parameters among years
+run_vast(dat_index = 4, ObsModel1 = c(1, 3))
+# Error in par[-random] <- x : replacement has length zero
+# In addition: Warning message:
+# In TMBhelper::Optimize(obj = Obj, newtonsteps = 1, lower = TmbList[["Lower"]],  :
+#   Hessian is not positive definite, so standard errors are not available
 
 #---------------------------------
-#Try to run by filtering out locations with zeroes 
+temp <- the_data[[4]]
+temp$unq <- paste(temp$lat, temp$lon)
+
+temp %>% ggplot(aes(x = year, y = cpue)) + geom_line(aes(colour = unq)) +
+  facet_wrap(~ spp) + theme(legend.position="none")
+
+#------------------------------------------------------------------
+#Try with only two species
 
 
-#---------------------------------
+temp$cpue
+
+the_data[[2]] %>% ggplot(aes(x = ))
+
+
+
+
+
+
 
 
 
 # For function: Specify data and ObsModel
+
+
+
+
 
 
 
