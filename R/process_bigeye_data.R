@@ -96,7 +96,9 @@ process_bigeye_data <- function(nspp){
   
   #Group on annual or seasonal time scales
   bet_comps_annual <- bet_comps_expd %>% group_by(lat, lon, year,
-    spp) %>% summarize(cpue = sum(freq)) %>% as.data.frame
+    spp) %>% summarize(cpue = sum(freq), bin_range = paste0(range(bin), 
+      collapse = "_")) %>% as.data.frame
+
   bet_comps_seasonal <- bet_comps_expd %>% group_by(lat, lon, year, quarter, spp) %>%
     summarize(cpue = sum(freq)) %>% as.data.frame
   
