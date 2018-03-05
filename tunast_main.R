@@ -1,4 +1,5 @@
-
+#-----------------------------------------------------------------------------------------------------
+#Run model with length compositions
 
 #-----------------------------------------------------------------------------------------------------
 #Set working directory based on computer I'm using
@@ -39,7 +40,14 @@ library(tunast)
 
 # Error in MakeADFun(data = TmbData, parameters = Parameters, hessian = FALSE,  : 
 #   A map factor length must equal parameter length
-the_data <- process_bigeye_data(nspp = 15)
+#Add in a vector of lengths
+
+fives <- seq(100, 200, by = 5)
+tens <- seq(100, 200, by = 10)
+the_data <- process_bigeye_data(length_bins = tens)
+
+
+
 
 # #Load the length composition data
 # bet_comps <- read.csv("data/bet_length_comps.csv", stringsAsFactors = FALSE)
@@ -74,7 +82,7 @@ grid_size_km = 10
 n_x = c(10, 25, 100, 200, 1000)[2] # Number of stations
 Kmeans_Config = list( "randomseed"=1, "nstart"=100, "iter.max"=1e3 )
 
-n_p = 2
+n_p = 
 FieldConfig = c("Omega1"=n_p, "Epsilon1"=n_p, "Omega2"=n_p, "Epsilon2"=n_p) 
 RhoConfig = c("Beta1"=2, "Beta2"=2, "Epsilon1"=0, "Epsilon2"=0) 
 OverdispersionConfig = c("Vessel"=0, "VesselYear"=0)
@@ -102,8 +110,7 @@ Data_Geostat <-data.frame(spp = as.character(data$spp), Catch_KG = data$cpue,
                           AreaSwept_km2 = 1, Lon = data$lon)
 
 Extrapolation_List = Grid_Fn(Data_Geostat=Data_Geostat,zone=13,grid_dim_km=10)
-
-# save(Extrapolation_List, file=paste0(DateFile,"Extrapolation_List.RData"))
+save(Extrapolation_List, file=paste0(DateFile,"Extrapolation_List.RData"))
 
 Spatial_List = Spatial_Information_Fn( grid_size_km=grid_size_km, n_x=n_x, Method=Method, Lon=Data_Geostat[,'Lon'], Lat=Data_Geostat[,'Lat'], Extrapolation_List=Extrapolation_List, randomseed=Kmeans_Config[["randomseed"]], nstart=Kmeans_Config[["nstart"]], iter.max=Kmeans_Config[["iter.max"]], DirPath=DateFile, Save_Results=FALSE)
 
