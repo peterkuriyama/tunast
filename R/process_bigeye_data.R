@@ -35,39 +35,9 @@ process_bigeye_data <- function(length_bins){
   bet_numbers_complete$spp <- 1
   bet_numbers_annual <- bet_numbers_complete %>% as.data.frame
   
-  ###plot the data to see what things look like
-  # world_map <- map_data("world")
-  # plot_numbers <- bet_numbers_annual %>% group_by(lat, lon) %>% summarize(cpue = sum(cpue)) 
-  
-  # ggplot() + geom_raster(data = plot_numbers, aes(x = lon, y = lat, fill = cpue)) + 
-  #   scale_fill_gradient(low = 'white', high = 'red') +
-  #   geom_map(data = world_map, map = world_map,
-  #     aes(x = long, y = lat, map_id = region)) + 
-  #   scale_x_continuous(limits = c(-148, -72)) + 
-  #   scale_y_continuous(limits = c(-43, 48)) + theme_bw()
-    
-  # bet_complete <- bet_co_annual %>% complete(spp, nesting(lat, lon, year),
-  #   fill = list(cpue = 0)) %>% as.data.frame
-  
   #---------------------------------
   #Composition data
   bet_comps <- read.csv("data/bet_length_comps.csv", stringsAsFactors = FALSE)
-
-# browser()  
-
-#Remove the comp expansion spatially  
-  #Expand the comps for plotting purposes
-  # expd_inds <- as.data.frame(bet_comps$Freq)
-  # expd_inds$ind <- 1:nrow(expd_inds)
-  # expd_inds <- rep(expd_inds$ind, expd_inds[, 1])
-  
-  # bet_comps_expd <- bet_comps[expd_inds, ]
-  # bet_comps_expd$Freq <- 1
-  # hist(bet_comps_expd$Bin, breaks = 50)
-  
-  # the_bins <- bet_comps_expd %>% group_by(spp) %>% 
-  #   summarize(mins = round(min(bin)), 
-  #   maxes = round(max(bin))) %>% as.data.frame
   
   #Classify the species
   for(ii in 1:length(length_bins)){
@@ -84,26 +54,6 @@ process_bigeye_data <- function(length_bins){
       bet_comps[inds, 'spp'] <- ii + 1
     }
   }
-
-
-
-  # #reclassify the species
-  # for(ii in the_bins$spp){
-  #   #First bin
-  #   if(ii == 1){
-  #     bet_comps_expd[which(bet_comps_expd$bin <= the_bins$maxes[1]), 'spp'] <- 1    
-  #   }
-  
-  #   if(ii %in% c(1, max(the_bins$spp)) == FALSE){
-  #     the_inds <- which(bet_comps_expd$bin > the_bins$mins[ii] &
-  #       bet_comps_expd$bin <= the_bins$maxes[ii])    
-  #   }
-  
-  #   #Last bin
-  #   if(ii == max(the_bins$spp)){
-  #     bet_comps_expd[which(bet_comps_expd$bin > the_bins$maxes[ii]), 'spp'] <- max(the_bins$spp)
-  #   }
-  # }
   
   #Treat certain length bins as species
   names(bet_comps) <- tolower(names(bet_comps))
@@ -120,26 +70,14 @@ process_bigeye_data <- function(length_bins){
   bet_comps_seasonal <- bet_comps %>% group_by(lat, lon, year, quarter, spp) %>%
     summarize(cpue = sum(freq)) %>% as.data.frame
   
-  #Complete the data frames by adding zeroes
-  # bet_complete_annual <- bet_comps_annual %>% complete(spp, nesting(lat, lon, year),
-  #   fill = list(cpue = 0)) %>% as.data.frame
-  # bet_complete_seasonal <- bet_comps_seasonal %>% complete(spp, nesting(lat, lon, year, quarter),
-  #   fill = list(cpue = 0)) %>% as.data.frame
-  
-  #Look at proportion of zeroes
-  # bet_complete_annual %>% filter(year >= 1986) %>% group_by( spp, year) %>% summarize(nzeroes = length(which(cpue == 0)),
-  #   nrows = length(cpue), prop_zeroes = nzeroes / nrows)
-  
-  # bet_complete_seasonal %>% filter(year >= 1986) %>% group_by(spp, year, quarter) %>%
-  #   summarize(nzeroes = length(which(cpue == 0)), nrows = length(cpue), 
-  #     prop_zeroes = nzeroes / nrows) %>% ungroup() %>% select(prop_zeroes) %>% unique
-  
-  
   outs <- list(bet_numbers_annual = bet_numbers_annual, 
                bet_complete_annual = bet_comps_annual,
                bet_complete_seasonal = bet_comps_seasonal)
   
   return(outs)
+}
+
+  
   #Consider 'CPUE' to be numbers of fish
   #**might make this numbers/nhooks in the future**
   # bet_comps1 <- bet_comps %>% group_by(lat, lon, year, quarter, spp) %>% 
@@ -160,7 +98,16 @@ process_bigeye_data <- function(length_bins){
   # bet_comps_annual <- bet_complete_annual %>% filter(year >= 1986)
   # unique(bet_comps_annual$year)[order(unique(bet_comps_annual$year))]
 
-
-
-}
-
+###plot the data to see what things look like
+  # world_map <- map_data("world")
+  # plot_numbers <- bet_numbers_annual %>% group_by(lat, lon) %>% summarize(cpue = sum(cpue)) 
+  
+  # ggplot() + geom_raster(data = plot_numbers, aes(x = lon, y = lat, fill = cpue)) + 
+  #   scale_fill_gradient(low = 'white', high = 'red') +
+  #   geom_map(data = world_map, map = world_map,
+  #     aes(x = long, y = lat, map_id = region)) + 
+  #   scale_x_continuous(limits = c(-148, -72)) + 
+  #   scale_y_continuous(limits = c(-43, 48)) + theme_bw()
+    
+  # bet_complete <- bet_co_annual %>% complete(spp, nesting(lat, lon, year),
+  #   fill = list(cpue = 0)) %>% as.data.frame
