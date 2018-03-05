@@ -1,10 +1,10 @@
 #' Function to process bigeye data
 #' Process three types of bigeye data: annual counts, annual counts by length bins, 
 #' annual counts by length bins and seasons
-#' @param nspp Number of species to divide length bins into
+#' @param length_bins Vector of lengths to assign as 'species'
 #' @export
 
-process_bigeye_data <- function(nspp){
+process_bigeye_data <- function(length_bins){
   #-----------------------------------------------------------------------------------------------------
   #Read in Data
   bill_catch <- read.csv("data/PublicLLTunaBillfishMt.csv", stringsAsFactors = FALSE)
@@ -52,74 +52,92 @@ process_bigeye_data <- function(nspp){
   #---------------------------------
   #Composition data
   bet_comps <- read.csv("data/bet_length_comps.csv", stringsAsFactors = FALSE)
-  
+
+# browser()  
+
+#Remove the comp expansion spatially  
   #Expand the comps for plotting purposes
-  expd_inds <- as.data.frame(bet_comps$Freq)
-  expd_inds$ind <- 1:nrow(expd_inds)
-  expd_inds <- rep(expd_inds$ind, expd_inds[, 1])
+  # expd_inds <- as.data.frame(bet_comps$Freq)
+  # expd_inds$ind <- 1:nrow(expd_inds)
+  # expd_inds <- rep(expd_inds$ind, expd_inds[, 1])
   
-  bet_comps_expd <- bet_comps[expd_inds, ]
+  # bet_comps_expd <- bet_comps[expd_inds, ]
+  # bet_comps_expd$Freq <- 1
+  # hist(bet_comps_expd$Bin, breaks = 50)
   
-  #**assign 'spp' values for different length classes**#
-  #Specify number of length classes here, using 3 now
-  # nspp <- 2
-  bet_comps_expd$spp <- ntile(bet_comps_expd$Bin, nspp)
-  names(bet_comps_expd) <- tolower(names(bet_comps_expd))
+  # the_bins <- bet_comps_expd %>% group_by(spp) %>% 
+  #   summarize(mins = round(min(bin)), 
+  #   maxes = round(max(bin))) %>% as.data.frame
   
-  the_bins <- bet_comps_expd %>% group_by(spp) %>% summarize(mins = round(min(bin), -1), 
-    maxes = round(max(bin), -1)) %>% as.data.frame
-  
-  #reclassify the species
-  for(ii in the_bins$spp){
-    #First bin
-    if(ii == 1){
-      bet_comps_expd[which(bet_comps_expd$bin <= the_bins$maxes[1]), 'spp'] <- 1    
-    }
-  
-    if(ii %in% c(1, max(the_bins$spp)) == FALSE){
-      the_inds <- which(bet_comps_expd$bin > the_bins$mins[ii] &
-        bet_comps_expd$bin <= the_bins$maxes[ii])    
-    }
-  
-    #Last bin
-    if(ii == max(the_bins$spp)){
-      bet_comps_expd[which(bet_comps_expd$bin > the_bins$maxes[ii]), 'spp'] <- max(the_bins$spp)
+  #Classify the species
+  for(ii in 1:length(length_bins)){
+    # print(ii)    
+    #Conditions of assigning species
+    if(ii == 1) inds <- which(bet_comps$Bin <= length_bins[ii])  
+    if(ii != 1) inds <- which(bet_comps$Bin > length_bins[ii - 1] & bet_comps$Bin <= length_bins[ii])
+    
+    # if(ii == length(tens)) inds <- which(bet_comps$Bin > tens[ii])
+    
+    bet_comps[inds, 'spp'] <- ii
+    if(ii == length(length_bins)){
+      inds <- which(bet_comps$Bin > length_bins[ii])
+      bet_comps[inds, 'spp'] <- ii + 1
     }
   }
+
+
+
+  # #reclassify the species
+  # for(ii in the_bins$spp){
+  #   #First bin
+  #   if(ii == 1){
+  #     bet_comps_expd[which(bet_comps_expd$bin <= the_bins$maxes[1]), 'spp'] <- 1    
+  #   }
+  
+  #   if(ii %in% c(1, max(the_bins$spp)) == FALSE){
+  #     the_inds <- which(bet_comps_expd$bin > the_bins$mins[ii] &
+  #       bet_comps_expd$bin <= the_bins$maxes[ii])    
+  #   }
+  
+  #   #Last bin
+  #   if(ii == max(the_bins$spp)){
+  #     bet_comps_expd[which(bet_comps_expd$bin > the_bins$maxes[ii]), 'spp'] <- max(the_bins$spp)
+  #   }
+  # }
   
   #Treat certain length bins as species
-  names(bet_comps_expd) <- tolower(names(bet_comps_expd))
+  names(bet_comps) <- tolower(names(bet_comps))
   
+
   #Change frequency of all rows to 1 (because they are expanded)
-  bet_comps_expd$freq <- 1
-  sum(bet_comps_expd$freq) == sum(bet_comps$Freq)
+  # bet_comps_expd$freq <- 1
+  # sum(bet_comps_expd$freq) == sum(bet_comps$Freq)
   
   #Group on annual or seasonal time scales
-  bet_comps_annual <- bet_comps_expd %>% group_by(lat, lon, year,
-    spp) %>% summarize(cpue = sum(freq), bin_range = paste0(range(bin), 
-      collapse = "_")) %>% as.data.frame
+  bet_comps_annual <- bet_comps %>% group_by(lat, lon, year,
+    spp) %>% summarize(cpue = sum(freq)) %>% as.data.frame
 
-  bet_comps_seasonal <- bet_comps_expd %>% group_by(lat, lon, year, quarter, spp) %>%
+  bet_comps_seasonal <- bet_comps %>% group_by(lat, lon, year, quarter, spp) %>%
     summarize(cpue = sum(freq)) %>% as.data.frame
   
   #Complete the data frames by adding zeroes
-  bet_complete_annual <- bet_comps_annual %>% complete(spp, nesting(lat, lon, year),
-    fill = list(cpue = 0)) %>% as.data.frame
-  bet_complete_seasonal <- bet_comps_seasonal %>% complete(spp, nesting(lat, lon, year, quarter),
-    fill = list(cpue = 0)) %>% as.data.frame
+  # bet_complete_annual <- bet_comps_annual %>% complete(spp, nesting(lat, lon, year),
+  #   fill = list(cpue = 0)) %>% as.data.frame
+  # bet_complete_seasonal <- bet_comps_seasonal %>% complete(spp, nesting(lat, lon, year, quarter),
+  #   fill = list(cpue = 0)) %>% as.data.frame
   
   #Look at proportion of zeroes
-  bet_complete_annual %>% filter(year >= 1986) %>% group_by( spp, year) %>% summarize(nzeroes = length(which(cpue == 0)),
-    nrows = length(cpue), prop_zeroes = nzeroes / nrows)
+  # bet_complete_annual %>% filter(year >= 1986) %>% group_by( spp, year) %>% summarize(nzeroes = length(which(cpue == 0)),
+  #   nrows = length(cpue), prop_zeroes = nzeroes / nrows)
   
-  bet_complete_seasonal %>% filter(year >= 1986) %>% group_by(spp, year, quarter) %>%
-    summarize(nzeroes = length(which(cpue == 0)), nrows = length(cpue), 
-      prop_zeroes = nzeroes / nrows) %>% ungroup() %>% select(prop_zeroes) %>% unique
+  # bet_complete_seasonal %>% filter(year >= 1986) %>% group_by(spp, year, quarter) %>%
+  #   summarize(nzeroes = length(which(cpue == 0)), nrows = length(cpue), 
+  #     prop_zeroes = nzeroes / nrows) %>% ungroup() %>% select(prop_zeroes) %>% unique
   
   
   outs <- list(bet_numbers_annual = bet_numbers_annual, 
-               bet_complete_annual = bet_complete_annual,
-               bet_complete_seasonal = bet_complete_seasonal)
+               bet_complete_annual = bet_comps_annual,
+               bet_complete_seasonal = bet_comps_seasonal)
   
   return(outs)
   #Consider 'CPUE' to be numbers of fish

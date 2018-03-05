@@ -6,10 +6,10 @@
 Process three types of bigeye data: annual counts, annual counts by length bins, 
 annual counts by length bins and seasons}
 \usage{
-process_bigeye_data(nspp)
+process_bigeye_data(length_bins)
 }
 \arguments{
-\item{nspp}{Number of species to divide length bins into}
+\item{length_bins}{Vector of lengths to assign as 'species'}
 }
 \description{
 Function to process bigeye data
